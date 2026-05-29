@@ -17,3 +17,20 @@ class CreatePostSerializer(serializers.ModelSerializer):
     )
 
     return post
+  
+
+
+class EditPostSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Post
+    fields = ['id', 'title', 'content', 'status']
+
+
+
+class ViewPostsSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Post
+    fields = ['id', 'title', 'content', 'status']
+  
