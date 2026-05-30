@@ -34,3 +34,9 @@ class ViewPostsSerializer(serializers.ModelSerializer):
     model = Post
     fields = ['id', 'title', 'content', 'status']
   
+
+class ViewMyPostsSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Post
+    fields = ['id', 'title', 'content', 'status']

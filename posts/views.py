@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer
+from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
@@ -54,5 +54,16 @@ def view_posts(request):
   posts = Post.objects.filter(status='published')
 
   serializer = ViewPostsSerializer(posts, many=True)
+
+  return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_my_posts(request):
+  
+  posts = Post.objects.filter(author=request.user)
+
+  serializer = ViewMyPostsSerializer(posts, many=True)
 
   return Response(serializer.data)
