@@ -1,11 +1,11 @@
 from django.shortcuts import render
-from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer
+from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer, CreateCommentSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from .models import Post
+from .models import Post, Comment
 # Create your views here.
 
 @api_view(['POST'])
@@ -67,3 +67,32 @@ def view_my_posts(request):
   serializer = ViewMyPostsSerializer(posts, many=True)
 
   return Response(serializer.data)
+
+
+
+
+#####################Comment APIs##################
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_comment(request, pk):
+
+  post = get_object_or_404(Post, id=pk)
+
+  serializer = CreateCommentSerializer(
+    data=request.data,
+    context={
+      'request': request,
+      'post': post
+    }
+  )
+
+  if serializer.is_valid():
+
+    serializer.save()
+
+    return Response({
+      'message': 'commented on the post successfully',
+      'data': serializer.data
+      })
+  
+  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
