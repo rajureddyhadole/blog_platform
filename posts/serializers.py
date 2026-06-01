@@ -65,3 +65,11 @@ class CreateCommentSerializer(serializers.ModelSerializer):
     )
 
     return comment
+  
+
+
+class ViewCommentsSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Comment
+    fields = ['id', 'author', 'post', 'content']

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer, CreateCommentSerializer
+from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer, CreateCommentSerializer, ViewCommentsSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
@@ -96,3 +96,17 @@ def create_comment(request, pk):
       })
   
   return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def view_comments(request, pk):
+  
+  comments = Comment.objects.filter(
+    post_id=pk
+  )
+
+  serializer = ViewCommentsSerializer(comments, many=True)
+
+  return Response(serializer.data)
