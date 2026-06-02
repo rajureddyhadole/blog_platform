@@ -73,3 +73,27 @@ class ViewCommentsSerializer(serializers.ModelSerializer):
   class Meta:
     model = Comment
     fields = ['id', 'author', 'post', 'content']
+
+
+class ReplyToCommentSerializer(serializers.ModelSerializer):
+
+  class Meta:
+    model = Comment
+    fields = ['id', 'author', 'post', 'content', 'parent']
+
+    extra_kwargs = {
+      'author': {'read_only': True},
+      'post': {'read_only': True},
+      'parent': {'read_only': True}
+    }
+
+  def create(self, validated_data):
+
+    comment = Comment.objects.create(
+      author=self.context['request'].user,
+      post=self.context['post'],
+      content=validated_data['content'],
+      parent=self.context['comment']
+    )
+
+    return comment
