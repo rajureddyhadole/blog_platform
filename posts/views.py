@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from .models import Post, Comment
+from .models import Post, Comment, PostLike, CommentLike, Bookmark
 # Create your views here.
 
 @api_view(['POST'])
@@ -134,3 +134,43 @@ def reply_to_comments(request, pk):
     })
   
   return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+##############post like api ######################
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_post(request, post_id):
+  
+  post = get_object_or_404(Post, id=post_id)
+
+  user = request.user
+
+  try:
+    like_exists = PostLike.objects.get(user=user, post=post)
+  except PostLike.DoesNotExist:
+    like_exists = None
+
+  if like_exists:
+
+    like_exists.delete()
+    
+    return Response({
+      'message': "you disliked the post",
+      'user': like_exists.user.id,
+      'post': like_exists.post.id
+    })
+
+  like = PostLike.objects.create(
+    user=user,
+    post=post
+  )
+
+  return Response({
+    'message': 'liked a post successfully',
+    'id': like.id,
+    'user': like.user.id,
+    'post': like.post.id
+  }, status=status.HTTP_201_CREATED)

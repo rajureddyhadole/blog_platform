@@ -53,6 +53,10 @@ class PostLike(models.Model):
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
   post = models.ForeignKey(Post, on_delete=models.CASCADE)
 
+  class Meta:
+    constraints = [
+      models.UniqueConstraint(fields=['user', 'post'], name='unique_user_post')
+    ]
 
 
 class CommentLike(models.Model):
