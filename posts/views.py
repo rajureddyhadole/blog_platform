@@ -174,3 +174,37 @@ def like_post(request, post_id):
     'user': like.user.id,
     'post': like.post.id
   }, status=status.HTTP_201_CREATED)
+
+
+
+############# comment like api ########################
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def like_comment(request, comment_id):
+  
+  comment = get_object_or_404(Comment, id=comment_id)
+
+  user = request.user
+
+  like_exists = CommentLike.objects.filter(user=user, comment=comment).first()
+  
+  if like_exists:
+
+    like_exists.delete()
+
+    return Response({
+      'message': "You have unliked the comment",
+      'user': like_exists.user.id,
+      'comment': like_exists.comment.id
+    })
+  
+  like = CommentLike.objects.create(
+    user=user,
+    comment=comment
+  )
+
+  return Response({
+    'message': "you have liked this comment",
+    'user': like.user.id,
+    'comment': like.comment.id
+  }, status=status.HTTP_201_CREATED)
