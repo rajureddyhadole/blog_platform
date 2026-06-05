@@ -6,6 +6,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from .models import Post, Comment, PostLike, CommentLike, Bookmark
+from django.db.models import Q
 # Create your views here.
 
 @api_view(['POST'])
@@ -52,6 +53,19 @@ def edit_post(request, pk):
 def view_posts(request):
 
   posts = Post.objects.filter(status='published')
+
+  author_param = request.query_params.get('author')
+  search_param = request.query_params.get('search')
+
+  if author_param:
+
+    posts = posts.filter(author__username__iexact=author_param)
+  
+  if search_param:
+
+    posts = posts.filter(
+      Q(title__icontains=search_param) | Q(content__icontains=search_param)
+    )
 
   serializer = ViewPostsSerializer(posts, many=True)
 
@@ -208,3 +222,36 @@ def like_comment(request, comment_id):
     'user': like.user.id,
     'comment': like.comment.id
   }, status=status.HTTP_201_CREATED)
+
+
+
+
+################ bookmark api ##################
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def bookmark(request, post_id):
+  
+  post = get_object_or_404(Post, id=post_id)
+
+  bookmark_exists = Bookmark.objects.filter(user=request.user, post=post).first()
+
+  if bookmark_exists:
+
+    bookmark_exists.delete()
+
+    return Response({
+      'message': 'bookmark is removed successfully',
+      'user': bookmark_exists.user.id,
+      'post': bookmark_exists.post.id
+    })
+  
+  bookmark = Bookmark.objects.create(
+    user=request.user,
+    post=post
+  )
+
+  return Response({
+    'message': "bookmark added successfully",
+    'user': bookmark.user.id,
+    'post': bookmark.post.id
+  })
