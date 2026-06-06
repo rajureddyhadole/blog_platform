@@ -29,9 +29,9 @@ def create_post(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def edit_post(request, pk):
+def edit_post(request, post_id):
 
-  post = get_object_or_404(Post, id=pk, author=request.user)
+  post = get_object_or_404(Post, id=post_id, author=request.user)
   
   serializer = EditPostSerializer(post, data=request.data, partial=True)
 
@@ -88,9 +88,9 @@ def view_my_posts(request):
 #####################Comment APIs##################
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def create_comment(request, pk):
+def create_comment(request, post_id):
 
-  post = get_object_or_404(Post, id=pk)
+  post = get_object_or_404(Post, id=post_id)
 
   serializer = CreateCommentSerializer(
     data=request.data,
@@ -115,10 +115,10 @@ def create_comment(request, pk):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def view_comments(request, pk):
+def view_comments(request, post_id):
   
   comments = Comment.objects.filter(
-    post_id=pk
+    post_id=post_id
   )
 
   serializer = ViewCommentsSerializer(comments, many=True)
@@ -130,9 +130,9 @@ def view_comments(request, pk):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def reply_to_comments(request, pk):
+def reply_to_comments(request, comment_id):
   
-  comment = get_object_or_404(Comment, id=pk)
+  comment = get_object_or_404(Comment, id=comment_id)
 
   post = comment.post
 
