@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from .models import Post, Comment, PostLike, CommentLike, Bookmark
 from django.db.models import Q
+from .pagination import PostsPagination
 # Create your views here.
 
 @api_view(['POST'])
@@ -66,10 +67,19 @@ def view_posts(request):
     posts = posts.filter(
       Q(title__icontains=search_param) | Q(content__icontains=search_param)
     )
+  
+  paginator = PostsPagination()
 
-  serializer = ViewPostsSerializer(posts, many=True)
+  paginated_posts = paginator.paginate_queryset(
+    posts,
+    request
+  )
 
-  return Response(serializer.data)
+  serializer = ViewPostsSerializer(paginated_posts, many=True)
+
+  return paginator.get_paginated_response(
+    serializer.data
+  )
 
 
 @api_view(['GET'])
