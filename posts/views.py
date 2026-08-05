@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .serializers import CreatePostSerializer, EditPostSerializer, ViewPostsSerializer, ViewMyPostsSerializer, CreateCommentSerializer, ViewCommentsSerializer, ReplyToCommentSerializer
+from .serializers import PostsSerializer, CommentSerializer, ReplyToCommentSerializer
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
@@ -14,11 +14,11 @@ from .pagination import PostsPagination
 @permission_classes([IsAuthenticated])
 def create_post(request):
 
-  serializer = CreatePostSerializer(data=request.data, context={'request': request})
+  serializer = PostsSerializer(data=request.data)
 
   if serializer.is_valid():
 
-    serializer.save()
+    serializer.save(author=request.user)
 
     return Response({
       'message':'Post created successfully.',
@@ -34,7 +34,7 @@ def edit_post(request, post_id):
 
   post = get_object_or_404(Post, id=post_id, author=request.user)
   
-  serializer = EditPostSerializer(post, data=request.data, partial=True)
+  serializer = PostsSerializer(post, data=request.data, partial=True)
 
   if serializer.is_valid():
 
@@ -75,7 +75,7 @@ def view_posts(request):
     request
   )
 
-  serializer = ViewPostsSerializer(paginated_posts, many=True)
+  serializer = PostsSerializer(paginated_posts, many=True)
 
   return paginator.get_paginated_response(
     serializer.data
@@ -88,7 +88,7 @@ def view_my_posts(request):
   
   posts = Post.objects.filter(author=request.user)
 
-  serializer = ViewMyPostsSerializer(posts, many=True)
+  serializer = PostsSerializer(posts, many=True)
 
   return Response(serializer.data)
 
@@ -102,17 +102,11 @@ def create_comment(request, post_id):
 
   post = get_object_or_404(Post, id=post_id)
 
-  serializer = CreateCommentSerializer(
-    data=request.data,
-    context={
-      'request': request,
-      'post': post
-    }
-  )
+  serializer = CommentSerializer(data=request.data)
 
   if serializer.is_valid():
 
-    serializer.save()
+    serializer.save(author=request.user, post=post)
 
     return Response({
       'message': 'commented on the post successfully',
@@ -131,7 +125,7 @@ def view_comments(request, post_id):
     post_id=post_id
   )
 
-  serializer = ViewCommentsSerializer(comments, many=True)
+  serializer = CommentSerializer(comments, many=True)
 
   return Response(serializer.data)
 
@@ -146,11 +140,11 @@ def reply_to_comments(request, comment_id):
 
   post = comment.post
 
-  serializer = ReplyToCommentSerializer(data=request.data, context={'request': request, 'post': post, 'comment': comment})
+  serializer = ReplyToCommentSerializer(data=request.data)
 
   if serializer.is_valid():
 
-    serializer.save()
+    serializer.save(author=request.user, post=post, parent=comment)
 
     return Response({
       'message': 'reply is done successfully',
