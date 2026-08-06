@@ -55,7 +55,7 @@ class PostLike(models.Model):
 
   class Meta:
     constraints = [
-      models.UniqueConstraint(fields=['user', 'post'], name='unique_user_post')
+      models.UniqueConstraint(fields=['user', 'post'], name='unique_user_post_like')
     ]
 
 
@@ -64,9 +64,19 @@ class CommentLike(models.Model):
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
   comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
 
+  class Meta:
+    constraints = [
+      models.UniqueConstraint(fields=['user', 'comment'], name="unique_user_comment_like")
+    ]
+
 
 
 class Bookmark(models.Model):
 
   user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
   post = models.ForeignKey(Post, on_delete=models.CASCADE)
+
+  class Meta:
+    constraints = [
+      models.UniqueConstraint(fields=['user', 'post'], name="unique_user_bookmark")
+    ]

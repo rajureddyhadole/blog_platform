@@ -8,24 +8,54 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Post, Comment, PostLike, CommentLike, Bookmark
 from django.db.models import Q
 from .pagination import PostsPagination
+from rest_framework import generics
 # Create your views here.
 
-@api_view(['POST'])
+
+@api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])
-def create_post(request):
-
-  serializer = PostsSerializer(data=request.data)
-
-  if serializer.is_valid():
-
+def post_list_create(request):
+  if request.method == "POST":
+    serializer = PostsSerializer(data=request.data)
+    
+    serializer.is_valid(raise_exception=True)
+  
     serializer.save(author=request.user)
 
     return Response({
       'message':'Post created successfully.',
       'data': serializer.data
     })
+
+
+  if request.method == "GET":
+    posts = Post.objects.filter(status='published')
+    
+    author_param = request.query_params.get('author')
+    search_param = request.query_params.get('search')
   
-  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    if author_param:
+  
+      posts = posts.filter(author__username__iexact=author_param)
+    
+    if search_param:
+  
+      posts = posts.filter(
+        Q(title__icontains=search_param) | Q(content__icontains=search_param)
+      )
+    
+    paginator = PostsPagination()
+  
+    paginated_posts = paginator.paginate_queryset(
+      posts,
+      request
+    )
+  
+    serializer = PostsSerializer(paginated_posts, many=True)
+  
+    return paginator.get_paginated_response(
+      serializer.data
+    )
 
 
 @api_view(['POST'])
@@ -51,39 +81,6 @@ def edit_post(request, post_id):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def view_posts(request):
-
-  posts = Post.objects.filter(status='published')
-
-  author_param = request.query_params.get('author')
-  search_param = request.query_params.get('search')
-
-  if author_param:
-
-    posts = posts.filter(author__username__iexact=author_param)
-  
-  if search_param:
-
-    posts = posts.filter(
-      Q(title__icontains=search_param) | Q(content__icontains=search_param)
-    )
-  
-  paginator = PostsPagination()
-
-  paginated_posts = paginator.paginate_queryset(
-    posts,
-    request
-  )
-
-  serializer = PostsSerializer(paginated_posts, many=True)
-
-  return paginator.get_paginated_response(
-    serializer.data
-  )
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def view_my_posts(request):
   
   posts = Post.objects.filter(author=request.user)
@@ -96,38 +93,34 @@ def view_my_posts(request):
 
 
 #####################Comment APIs##################
-@api_view(['POST'])
+
+@api_view(['POST', 'GET'])
 @permission_classes([IsAuthenticated])
-def create_comment(request, post_id):
-
-  post = get_object_or_404(Post, id=post_id)
-
-  serializer = CommentSerializer(data=request.data)
-
-  if serializer.is_valid():
-
+def comment_list_create(request, post_id):
+  if request.method == "POST":
+    post = get_object_or_404(Post, id=post_id)
+    
+    serializer = CommentSerializer(data=request.data)
+  
+    serializer.is_valid(raise_exception=True)
+  
     serializer.save(author=request.user, post=post)
 
     return Response({
       'message': 'commented on the post successfully',
       'data': serializer.data
       })
-  
-  return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+  if request.method == "GET":
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def view_comments(request, post_id):
-  
-  comments = Comment.objects.filter(
-    post_id=post_id
-  )
-
-  serializer = CommentSerializer(comments, many=True)
-
-  return Response(serializer.data)
+    comments = Comment.objects.filter(
+        post_id=post_id
+      )
+    
+    serializer = CommentSerializer(comments, many=True)
+    
+    return Response(serializer.data)
 
 
 
